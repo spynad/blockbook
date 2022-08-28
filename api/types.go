@@ -193,6 +193,7 @@ type Tx struct {
 	Confirmations    uint32            `json:"confirmations"`
 	Blocktime        int64             `json:"blockTime"`
 	Size             int               `json:"size,omitempty"`
+	VSize            int               `json:"vsize,omitempty"`
 	ValueOutSat      *Amount           `json:"value"`
 	ValueInSat       *Amount           `json:"valueIn,omitempty"`
 	FeesSat          *Amount           `json:"fees,omitempty"`
