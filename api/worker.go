@@ -302,6 +302,8 @@ func (w *Worker) GetTransactionFromBchainTx(bchainTx *bchain.Tx, height int, spe
 		ValueInSat:       (*Amount)(pValInSat),
 		ValueOutSat:      (*Amount)(&valOutSat),
 		Version:          bchainTx.Version,
+		Size:             len(bchainTx.Hex) >> 1,
+		VSize:            int(bchainTx.VSize),
 		Hex:              bchainTx.Hex,
 		Rbf:              rbf,
 		Vin:              vins,
@@ -309,11 +311,6 @@ func (w *Worker) GetTransactionFromBchainTx(bchainTx *bchain.Tx, height int, spe
 		CoinSpecificData: sj,
 		TokenTransfers:   tokens,
 		EthereumSpecific: ethSpecific,
-	}
-	if w.chainParser.SupportsVSize() {
-		r.Size = len(bchainTx.Hex) >> 1
-		r.VSize = int(bchainTx.VSize)
-
 	}
 	return r, nil
 }
