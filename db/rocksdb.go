@@ -828,7 +828,7 @@ func (d *RocksDB) processAddressesBitcoinType(block *bchain.Block, addresses add
 // addToAddressesMap maintains mapping between addresses and transactions in one block
 // the method assumes that outputs in the block are processed before the inputs
 // the return value is true if the tx was processed before, to not to count the tx multiple times
-func addToAddressesMap(addresses addressesMap, strAddrDesc string, btxID []byte, index int32) bool {
+func addToAddressesMap(addresses addressesMap, addressTxIdx addressTxIdxMap, strAddrDesc string, btxID []byte, index int32) bool {
 	// check that the address was already processed in this block
 	// if not found, it has certainly not been counted
 	at, found := addresses[strAddrDesc]
