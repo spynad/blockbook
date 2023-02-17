@@ -501,6 +501,7 @@ type txIndexes struct {
 // each address contains a slice of transactions with indexes where the address appears
 // slice is used instead of map so that order is defined and also search in case of few items
 type addressesMap map[string][]txIndexes
+type addressTxIdxMap map[string]map[string]int
 
 type outpoint struct {
 	btxID []byte
@@ -680,6 +681,7 @@ func (d *RocksDB) GetAndResetConnectBlockStats() string {
 func (d *RocksDB) processAddressesBitcoinType(block *bchain.Block, addresses addressesMap, txAddressesMap map[string]*TxAddresses, balances map[string]*AddrBalance) error {
 	blockTxIDs := make([][]byte, len(block.Txs))
 	blockTxAddresses := make([]*TxAddresses, len(block.Txs))
+    addressTxIdx := make(addressTxIdxMap)
 	// first process all outputs so that inputs can refer to txs in this block
 	for txi := range block.Txs {
 		tx := &block.Txs[txi]
@@ -731,7 +733,7 @@ func (d *RocksDB) processAddressesBitcoinType(block *bchain.Block, addresses add
 					Height:   block.Height,
 					ValueSat: output.ValueSat,
 				})
-				counted := addToAddressesMap(addresses, strAddrDesc, btxID, int32(i))
+                counted := addToAddressesMap(addresses, addressTxIdx, strAddrDesc, btxID, int32(i))
 				if !counted {
 					balance.Txs++
 				}
@@ -807,7 +809,7 @@ func (d *RocksDB) processAddressesBitcoinType(block *bchain.Block, addresses add
 				} else {
 					d.cbs.balancesHit++
 				}
-				counted := addToAddressesMap(addresses, strAddrDesc, spendingTxid, ^int32(i))
+                counted := addToAddressesMap(addresses, addressTxIdx, strAddrDesc, spendingTxid, ^int32(i))
 				if !counted {
 					balance.Txs++
 				}
@@ -830,15 +832,18 @@ func addToAddressesMap(addresses addressesMap, strAddrDesc string, btxID []byte,
 	// check that the address was already processed in this block
 	// if not found, it has certainly not been counted
 	at, found := addresses[strAddrDesc]
-	if found {
-		// if the tx is already in the slice, append the index to the array of indexes
-		for i, t := range at {
-			if bytes.Equal(btxID, t.btxID) {
-				at[i].indexes = append(t.indexes, index)
-				return true
-			}
+    if found {
+		idx, ok := addressTxIdx[strAddrDesc][string(btxID)]
+		if ok {
+			addresses[strAddrDesc][idx].indexes = append(addresses[strAddrDesc][idx].indexes, index)
+			return true
 		}
 	}
+
+	addressTxIdx[strAddrDesc]= map[string]int{
+		string(btxID) :len(at),
+	}
+
 	addresses[strAddrDesc] = append(at, txIndexes{
 		btxID:   btxID,
 		indexes: []int32{index},
